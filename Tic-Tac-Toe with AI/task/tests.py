@@ -1,11 +1,9 @@
+import random
 from copy import deepcopy
 from enum import Enum
 
 from hstest.stage_test import *
 from hstest.test_case import TestCase
-
-CheckResult.correct = lambda: CheckResult(True, '')
-CheckResult.wrong = lambda feedback: CheckResult(False, feedback)
 
 
 class FieldState(Enum):
@@ -39,7 +37,7 @@ class TicTacToeField:
 
             for row in range(3):
                 for col in range(3):
-                    index = (2 - row) * 3 + col
+                    index = row * 3 + col
                     self.field[row][col] = get_state(field[index])
 
     def equal_to(self, other) -> bool:
@@ -98,7 +96,7 @@ class TicTacToeField:
             [None for _ in range(3)] for _ in range(3)
         ]
 
-        y: int = 2
+        y: int = 0
 
         for line in lines:
             cols = line[2], line[4], line[6]
@@ -109,7 +107,7 @@ class TicTacToeField:
                     return None
                 field[y][x] = state
                 x += 1
-            y -= 1
+            y += 1
 
         return TicTacToeField(constructed=field)
 
@@ -164,164 +162,93 @@ def iterate_cells(initial: str) -> str:
 
 
 class TicTacToeTest(StageTest):
+    win = 0
+
     def generate(self) -> List[TestCase]:
-        tests: List[TestCase] = [
-            TestCase(
-                stdin="_XXOO_OX_\n1 1",
-                attach=("_XXOO_OX_", "XXXOO_OX_", "X wins")
-            ),
-            TestCase(
-                stdin="_XXOO_OX_\n1 3\n1 1",
-                attach=("_XXOO_OX_", "XXXOO_OX_", "X wins",
-                        "This cell is occupied! Choose another one!")
-            ),
-            TestCase(
-                stdin="_XXOO_OX_\n1 4\n1 1",
-                attach=("_XXOO_OX_", "XXXOO_OX_", "X wins",
-                        "Coordinates should be from 1 to 3!")
-            ),
-            TestCase(
-                stdin="_XXOO_OX_\none\n1 1",
-                attach=("_XXOO_OX_", "XXXOO_OX_", "X wins",
-                        "You should enter numbers!")
-            ),
-            TestCase(
-                stdin="_XXOO_OX_\none three\n1 1",
-                attach=("_XXOO_OX_", "XXXOO_OX_", "X wins",
-                        "You should enter numbers!")
-            ),
-            TestCase(
-                stdin="_XXOO_OX_\n2 3",
-                attach=("_XXOO_OX_", "_XXOOXOX_", "Game not finished")
-            ),
-            TestCase(
-                stdin="_XXOO_OX_\n3 3",
-                attach=("_XXOO_OX_", "_XXOO_OXX", "Game not finished")
-            ),
+        return self.basic_test() + \
+               [TestCase(stdin=(["2 2"] + [self.test for _ in range(100)]),
+                         check_function=self.check_1) for _ in range(50)] + \
+               [TestCase(stdin=[self.test for _ in range(100)],
+                         check_function=self.final_check)]
 
-            TestCase(
-                stdin="OXXXOOOX_\n3 3",
-                attach=("OXXXOOOX_", "OXXXOOOXX", "Draw")
-            ),
+    # input util the finish
+    def test(self, output):
+        index = random.randint(0, len(inputs) - 1)
+        return inputs[index]
 
-            TestCase(
-                stdin="XX_XOXOO_\n1 3",
-                attach=("XX_XOXOO_", "XXOXOXOO_", "O wins")
-            ),
-            TestCase(
-                stdin="XX_XOXOO_\n3 3",
-                attach=("XX_XOXOO_", "XX_XOXOOO", "O wins")
-            ),
+    # winnings counter
+    def check_1(self, reply: str, attach):
+        if "x wins" in reply.lower():
+            self.win += 1
+        return CheckResult.correct()
 
-            TestCase(
-                stdin="_XO_OX___\n1 1",
-                attach=("_XO_OX___", "XXO_OX___", "Game not finished")
-            ),
-            TestCase(
-                stdin="_XO_OX___\n2 1",
-                attach=("_XO_OX___", "_XOXOX___", "Game not finished")
-            ),
-            TestCase(
-                stdin="_XO_OX___\n3 1",
-                attach=("_XO_OX___", "_XO_OXX__", "Game not finished")
-            ),
-            TestCase(
-                stdin="_XO_OX___\n3 2",
-                attach=("_XO_OX___", "_XO_OX_X_", "Game not finished")
-            ),
-            TestCase(
-                stdin="_XO_OX___\n3 3",
-                attach=("_XO_OX___", "_XO_OX__X", "Game not finished")
-            ),
+    # check the percentage of winnings
+    def final_check(self, reply, attach):
+        print(self.win)
+        if self.win > 13:
+            return CheckResult.correct()
+        else:
+            return CheckResult.wrong("The difficulty of your AI is too high. " +
+                                     "Make it easier.\n"
+                                     "If you are sure the AI difficulty is fine, try to rerun the test.")
 
-            TestCase(
-                stdin="_XO_OX__X\n1 1",
-                attach=("_XO_OX__X", "OXO_OX__X", "Game not finished")
-            ),
-            TestCase(
-                stdin="_XO_OX__X\n2 1",
-                attach=("_XO_OX__X", "_XOOOX__X", "Game not finished")
-            ),
-            TestCase(
-                stdin="_XO_OX__X\n3 1",
-                attach=("_XO_OX__X", "_XO_OXO_X", "O wins")
-            ),
-            TestCase(
-                stdin="_XO_OX__X\n3 2",
-                attach=("_XO_OX__X", "_XO_OX_OX", "Game not finished")
-            ),
+    # here's the old test
+    def basic_test(self):
+        tests: List[TestCase] = []
 
-            TestCase(
-                stdin="XO_OXOX__\n1 3",
-                attach=("XO_OXOX__", "XOXOXOX__", "X wins")
-            ),
-            TestCase(
-                stdin="XO_OXOX__\n3 2",
-                attach=("XO_OXOX__", "XO_OXOXX_", "Game not finished")
-            ),
-            TestCase(
-                stdin="XO_OXOX__\n3 3",
-                attach=("XO_OXOX__", "XO_OXOX_X", "X wins")
-            ),
-        ]
+        i: int = 0
+        for input in inputs:
+            full_move_input = iterate_cells(input)
+
+            str_nums = input.split()
+            x = int(str_nums[0])
+            y = int(str_nums[1])
+
+            if i % 2 == 1:
+                full_move_input = f'4 {i}\n' + full_move_input
+
+            full_game_input = ''
+            for _ in range(9):
+                full_game_input += full_move_input
+
+            tests += [
+                TestCase(
+                    stdin=full_game_input,
+                    attach=(x, y),
+                    check_function=self.basic_check
+                )
+            ]
+
+            i += 1
 
         return tests
 
-    def check(self, reply: str, attach: str) -> CheckResult:
-
-        if len(attach) == 4:
-            stdin, result, state, additional = attach
-        else:
-            stdin, result, state = attach
-            additional = None
+    def basic_check(self, reply: str, attach: str):
+        clue_x, clue_y = attach
 
         fields = TicTacToeField.parse_all(reply)
 
-        if len(fields) != 2:
+        if len(fields) == 0:
             return CheckResult.wrong(
-                f"You should output exactly 2 fields, found: {len(fields)}"
+                "No fields found"
             )
 
-        curr: TicTacToeField = fields[0]
-        next: TicTacToeField = fields[1]
+        for i in range(1, len(fields)):
+            curr: TicTacToeField = fields[i - 1]
+            next: TicTacToeField = fields[i]
 
-        correct_curr = TicTacToeField(field=stdin)
-        correct_next = TicTacToeField(field=result)
+            stayed = curr.equal_to(next)
+            improved = curr.has_next_as(next)
 
-        reply = [line.strip() for line in reply.splitlines()
-                 if len(line.strip()) != 0]
-
-        last_line = reply[-1]
-
-        if last_line != state:
-            return CheckResult.wrong(
-                "The final result is wrong. Should be \""
-                + state + "\", found: \"" + last_line + "\""
-            )
-
-        if additional is not None:
-
-            if len([line for line in reply if additional in line]) == 0:
+            if not (stayed or improved):
                 return CheckResult.wrong(
-                    "Output should contain a line \""
-                    + additional + "\", but this line wasn't found."
+                    "For two fields following each " +
+                    "other one is not a continuation " +
+                    "of the other (they differ more than in two places)."
                 )
 
-        if not curr.equal_to(correct_curr):
-            return CheckResult.wrong(
-                "The first field is not equal to the input field " + stdin
-            )
-
-        if curr.equal_to(next):
-            return CheckResult.wrong(
-                "The first field is equals to the second, " +
-                "but should be different"
-            )
-
-        if not next.equal_to(correct_next):
-            return CheckResult.wrong(
-                "The first field is correct, but the second is not"
-            )
+        if "Making move level \"easy\"" not in reply:
+            return CheckResult.wrong("No \"Making move level \"easy\"\" line in output")
 
         return CheckResult.correct()
 

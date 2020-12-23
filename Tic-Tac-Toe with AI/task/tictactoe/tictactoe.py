@@ -1,4 +1,7 @@
 # write your code here
+import random
+
+
 class TicTacToeException(Exception):
     pass
 
@@ -7,6 +10,7 @@ class WrongCoordinatesFormat(TicTacToeException):
     def __str__(self):
         # return 'Coordinates should be two digits separated by space'
         return 'You should enter numbers!'
+
 
 class CoordinatesShouldBeNumbers(TicTacToeException):
     def __str__(self):
@@ -40,13 +44,12 @@ def raise_exception(number):
 
 
 class TicTacToe:
-
     game_table = {(1, 1): " ", (1, 2): " ", (1, 3): " ",
-                   (2, 1): " ", (2, 2): " ", (2, 3): " ",
-                   (3, 1): " ", (3, 2): " ", (3, 3): " ", }
+                  (2, 1): " ", (2, 2): " ", (2, 3): " ",
+                  (3, 1): " ", (3, 2): " ", (3, 3): " ", }
     start_pos_indexes = {0: (1, 1), 1: (1, 2), 2: (1, 3),
-                          3: (2, 1), 4: (2, 2), 5: (2, 3),
-                          6: (3, 1), 7: (3, 2), 8: (3, 3), }
+                         3: (2, 1), 4: (2, 2), 5: (2, 3),
+                         6: (3, 1), 7: (3, 2), 8: (3, 3), }
 
     def __init__(self, start_position):
         if len(start_position) == 0:
@@ -105,32 +108,37 @@ class TicTacToe:
             return self.game_table[(3, 1)]
         return ' '
 
-    def next_move(self, move_string):
-        move_list = move_string.split()
-
-        if len(move_list) != 2:
-            raise WrongCoordinatesFormat
-
-        coordinates = tuple(map(lambda x: int(x) if x in '123' else raise_exception(x), move_list))
-
-        if self.game_table[coordinates] != ' ':
-            raise ThisCellIsOccupied
-
-        self.game_table[coordinates] = self.which_move()
-
+    def computer_move(self, level=None):
+        if level is None:
+            level = "easy"
+            random.seed()
+        move_pos = random.choice(list(k for k, v in self.game_table.items() if v == ' '))
+        self.game_table[move_pos] = 'O'
+        print(f'Making move level "{level}"')
+        self.print_game_table()
         self.set_state()
 
+    def next_move(self, move_string):
+        move_list = move_string.split()
+        if len(move_list) != 2:
+            raise WrongCoordinatesFormat
+        coordinates = tuple(map(lambda x: int(x) if x in '123' else raise_exception(x), move_list))
+        if self.game_table[coordinates] != ' ':
+            raise ThisCellIsOccupied
+        self.game_table[coordinates] = self.which_move()
+        self.set_state()
         self.print_game_table()
 
     def print_game_table(self):
         print('-' * 9)
-        for i in range(1,4):
+        for i in range(1, 4):
             print(f'| {self.game_table[(i, 1)]} {self.game_table[(i, 2)]} {self.game_table[(i, 3)]} |')
         print('-' * 9)
 
 
 if __name__ == '__main__':
-    start_position = input("Enter the cells: >")
+    # start_position = input("Enter the cells: >")
+    start_position = '_________'
     try:
         game = TicTacToe(start_position)
     except WinFound as e:
@@ -139,11 +147,12 @@ if __name__ == '__main__':
     while True:
         try:
             game.next_move(input('Enter the coordinates: >'))
-            print(game.state)
-            break
+            # print(game.state)
+            game.computer_move()
         except WinFound as e:
             game.print_game_table()
             print(e)
+            # print('Making move level "Easy"')
             break
         except TicTacToeException as e:
             print(e)
