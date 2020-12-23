@@ -111,7 +111,10 @@ class TicTacToe:
     def computer_move(self, level=None):
         if level is None:
             level = "easy"
-            random.seed()
+        if self.state == 'Draw':
+            return
+
+        random.seed()
         move_pos = random.choice(list(k for k, v in self.game_table.items() if v == ' '))
         self.game_table[move_pos] = 'O'
         print(f'Making move level "{level}"')
@@ -148,6 +151,9 @@ if __name__ == '__main__':
         try:
             game.next_move(input('Enter the coordinates: >'))
             # print(game.state)
+            if game.state == 'Draw':
+                break
+
             game.computer_move()
         except WinFound as e:
             game.print_game_table()
