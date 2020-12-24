@@ -267,12 +267,9 @@ files:
     if __name__ == '__main__':
         TicTacToeTest('tictactoe.tictactoe').run_tests()
   learner_created: false
-- name: tictactoe/__init__.py
-  visible: true
-  learner_created: true
 feedback_link: https://hyperskill.org/projects/82/stages/453/implement#comment
 status: Solved
 feedback:
   message: Congratulations!
   time: Wed, 23 Dec 2020 21:32:38 UTC
-record: -1
+record: 2

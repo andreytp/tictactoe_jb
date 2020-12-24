@@ -44,17 +44,32 @@ def raise_exception(number):
 
 
 class TicTacToe:
-    game_table = {(1, 1): " ", (1, 2): " ", (1, 3): " ",
-                  (2, 1): " ", (2, 2): " ", (2, 3): " ",
-                  (3, 1): " ", (3, 2): " ", (3, 3): " ", }
-    start_pos_indexes = {0: (1, 1), 1: (1, 2), 2: (1, 3),
-                         3: (2, 1), 4: (2, 2), 5: (2, 3),
-                         6: (3, 1), 7: (3, 2), 8: (3, 3), }
 
-    def __init__(self, start_position):
+    def __init__(self, start_position, **kwargs):
+        self.dimension = 3
+        if 'dimension' in kwargs:
+            self.dimension = kwargs['dimension']
+
+        self.start_pos_indexes = {}
+        self.generate_start_pos_indexes()
+        self.game_table = {}
+        self.generate_game_table()
         if len(start_position) == 0:
             return
+        self.fill_start_pos(start_position)
 
+    def generate_start_pos_indexes(self):
+        count = 0
+        for i in range(self.dimension):
+            for j in range(self.dimension):
+                self.start_pos_indexes[count] = (i + 1, j + 1)
+                count += 1
+
+    def generate_game_table(self):
+        for val in self.start_pos_indexes.values():
+            self.game_table[val] = ' '
+
+    def fill_start_pos(self, start_position):
         for index, symbol in enumerate(start_position.upper()):
             if symbol == '_':
                 continue
@@ -64,7 +79,6 @@ class TicTacToe:
 
             if symbol == 'O':
                 self.game_table[self.start_pos_indexes[index]] = 'O'
-
         self.set_state()
         self.print_game_table()
 
@@ -88,73 +102,115 @@ class TicTacToe:
         return 'O'
 
     def check_win(self):
-        if self.game_table[(1, 1)] == self.game_table[(1, 2)] == self.game_table[(1, 3)]:
-            return self.game_table[(1, 1)]
-        if self.game_table[(2, 1)] == self.game_table[(2, 2)] == self.game_table[(2, 3)]:
-            return self.game_table[(2, 1)]
-        if self.game_table[(3, 1)] == self.game_table[(3, 2)] == self.game_table[(3, 3)]:
-            return self.game_table[(3, 1)]
+        for player in 'XO':
+            winh = 0
+            winv = 0
+            wind = 0
+            winnd = 0
 
-        if self.game_table[(1, 1)] == self.game_table[(2, 1)] == self.game_table[(3, 1)]:
-            return self.game_table[(1, 1)]
-        if self.game_table[(1, 2)] == self.game_table[(2, 2)] == self.game_table[(3, 3)]:
-            return self.game_table[(1, 2)]
-        if self.game_table[(1, 3)] == self.game_table[(2, 3)] == self.game_table[(3, 3)]:
-            return self.game_table[(1, 3)]
+            for i in range(1, self.dimension + 1):
 
-        if self.game_table[(1, 1)] == self.game_table[(2, 2)] == self.game_table[(3, 3)]:
-            return self.game_table[(1, 1)]
-        if self.game_table[(3, 1)] == self.game_table[(2, 2)] == self.game_table[(1, 3)]:
-            return self.game_table[(3, 1)]
+                if self.game_table[(i, i)] == player:
+                    wind += 1
+                else:
+                    wind = 0
+
+                if wind == self.dimension:
+                    return player
+
+                if self.game_table[(i, self.dimension - i + 1)] == player:
+                    winnd += 1
+                else:
+                    winnd = 0
+
+                if winnd == self.dimension:
+                    return player
+
+                for j in range(1, self.dimension + 1):
+
+                    if self.game_table[(i, j)] == player:
+                        winh += 1
+                    else:
+                        winh = 0
+
+                    if winh == self.dimension:
+                        return player
+
+                    if self.game_table[(j, i)] == player:
+                        winv += 1
+                    else:
+                        winv = 0
+
+                    if winv == self.dimension:
+                        return player
         return ' '
 
-    def computer_move(self, level=None):
+    def computer_move(self, level=None, role=None):
         if level is None:
             level = "easy"
+        if role is None:
+            role = 'O'
+
         if self.state == 'Draw':
             return
 
         random.seed()
         move_pos = random.choice(list(k for k, v in self.game_table.items() if v == ' '))
-        self.game_table[move_pos] = 'O'
+        self.game_table[move_pos] = role
         print(f'Making move level "{level}"')
-        self.print_game_table()
         self.set_state()
+        self.print_game_table()
 
-    def next_move(self, move_string):
+    def next_move(self, move_string, role=None):
         move_list = move_string.split()
         if len(move_list) != 2:
             raise WrongCoordinatesFormat
         coordinates = tuple(map(lambda x: int(x) if x in '123' else raise_exception(x), move_list))
         if self.game_table[coordinates] != ' ':
             raise ThisCellIsOccupied
-        self.game_table[coordinates] = self.which_move()
+        self.game_table[coordinates] = role
+        if role is None:
+            self.game_table[coordinates] = self.which_move()
         self.set_state()
         self.print_game_table()
 
     def print_game_table(self):
-        print('-' * 9)
-        for i in range(1, 4):
-            print(f'| {self.game_table[(i, 1)]} {self.game_table[(i, 2)]} {self.game_table[(i, 3)]} |')
-        print('-' * 9)
+        print('-' * (self.dimension * 2 + 3))
+        for i in range(1, self.dimension + 1):
+            print('|', end=' ')
+            for j in range(1, self.dimension + 1):
+                print(f'{self.game_table[(i, j)]}', end=' ')
+            print('|')
+        print('-' * (self.dimension * 2 + 3))
 
 
-if __name__ == '__main__':
-    # start_position = input("Enter the cells: >")
-    start_position = '_________'
+def game_with_opponent(player_x, player_o, **kwargs):
+    dimension = 3
+    if 'dimension' in kwargs:
+        dimension = kwargs['dimension']
+    start_position = '_' * dimension
     try:
-        game = TicTacToe(start_position)
+        game = TicTacToe(start_position, dimension=dimension)
     except WinFound as e:
         print(e)
-        exit(0)
+        return
     while True:
         try:
-            game.next_move(input('Enter the coordinates: >'))
+            if player_x == 'user':
+                game.next_move(input('Enter the coordinates: >'))
+            else:
+                game.computer_move(level=player_x, role='X')
             # print(game.state)
             if game.state == 'Draw':
+                print(game.state)
                 break
-
-            game.computer_move()
+            if player_o == 'user':
+                game.next_move(input('Enter the coordinates: >'))
+            else:
+                game.computer_move(level=player_o, role='O')
+            if game.state == 'Draw':
+                print(game.state)
+                break
         except WinFound as e:
             game.print_game_table()
             print(e)
@@ -162,3 +218,27 @@ if __name__ == '__main__':
             break
         except TicTacToeException as e:
             print(e)
+
+
+if __name__ == '__main__':
+    # start_position = input("Enter the cells: >")
+    while True:
+        command = input('Input command: >').lower()
+        if command == 'exit':
+            break
+        if 'start' in command:
+            if len(command.split()) != 3:
+                print('Bad parameters!')
+                continue
+            playerX = command.split()[1]
+            enabled_users_list = ['easy', 'user', ]
+            if playerX not in enabled_users_list:
+                print('Bad parameters!')
+                continue
+
+            playerO = command.split()[2]
+            if playerO not in enabled_users_list:
+                print('Bad parameters!')
+                continue
+
+            game_with_opponent(playerX, playerO, dimension=5)
