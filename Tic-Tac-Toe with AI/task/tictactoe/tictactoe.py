@@ -101,10 +101,83 @@ class TicTacToe:
 
         return 'O'
 
+    def find_next_move(self, role):
+        next_moves = {'X': [], 'O': [], }
+        for player in 'XO':
+            wind = 0
+            winnd = 0
+            wind_pos = None
+            winnd_pos = None
+
+            for i in range(1, self.dimension + 1):
+
+                if self.game_table[(i, i)] == player:
+                    wind += 1
+                elif self.game_table[(i, i)] == ' ':
+                    wind_pos = (i, i)
+                else:
+                    wind = 0
+                    wind_pos = None
+
+                if wind == (self.dimension - 1) and (not wind_pos is None):
+                    next_moves[player].append(wind_pos)
+
+                if self.game_table[(i, self.dimension - i + 1)] == player:
+                    winnd += 1
+                elif self.game_table[(i, self.dimension - i + 1)] == ' ':
+                    winnd_pos = (i, self.dimension - i + 1)
+                else:
+                    winnd = 0
+                    winnd_pos = None
+
+                if winnd == (self.dimension - 1) and (not winnd_pos is None):
+                    next_moves[player].append(winnd_pos)
+
+                winh = 0
+                winv = 0
+                winh_pos = None
+                winv_pos = None
+
+                for j in range(1, self.dimension + 1):
+
+                    if self.game_table[(i, j)] == player:
+                        winh += 1
+                    elif self.game_table[(i, j)] == ' ':
+                        winh_pos = (i, j)
+                    else:
+                        winh = 0
+                        winh_pos = None
+
+                    if winh == (self.dimension - 1) and (not winh_pos is None):
+                        next_moves[player].append(winh_pos)
+
+                    if self.game_table[(j, i)] == player:
+                        winv += 1
+                    elif self.game_table[(j, i)] == ' ':
+                        winv_pos = (j, i)
+                    else:
+                        winv = 0
+                        winv_pos = None
+
+                    if winv == (self.dimension - 1) and (not winv_pos is None):
+                        next_moves[player].append(winv_pos)
+
+        if len(next_moves[role]) > 0:
+            return next_moves[role][0]
+
+        opponent_role = 'XO'.replace(role, '')
+
+        if len(next_moves[opponent_role]) > 0:
+            return next_moves[opponent_role][0]
+
+        center_pos = (2, 2)
+        if self.game_table[center_pos] == ' ':
+            return center_pos
+
+        return self.random_choice()
+
     def check_win(self):
         for player in 'XO':
-            winh = 0
-            winv = 0
             wind = 0
             winnd = 0
 
@@ -126,6 +199,8 @@ class TicTacToe:
                 if winnd == self.dimension:
                     return player
 
+                winh = 0
+                winv = 0
                 for j in range(1, self.dimension + 1):
 
                     if self.game_table[(i, j)] == player:
@@ -153,13 +228,19 @@ class TicTacToe:
 
         if self.state == 'Draw':
             return
-
-        random.seed()
-        move_pos = random.choice(list(k for k, v in self.game_table.items() if v == ' '))
+        if level == 'easy':
+            move_pos = self.random_choice()
+        elif level == 'medium':
+            move_pos = self.find_next_move(role)
         self.game_table[move_pos] = role
         print(f'Making move level "{level}"')
         self.set_state()
         self.print_game_table()
+
+    def random_choice(self):
+        random.seed()
+        move_pos = random.choice(list(k for k, v in self.game_table.items() if v == ' '))
+        return move_pos
 
     def next_move(self, move_string, role=None):
         move_list = move_string.split()
@@ -221,6 +302,7 @@ def game_with_opponent(player_x, player_o, **kwargs):
 
 
 if __name__ == '__main__':
+    # game = TicTacToe('XXOOXXXOO', dimension=3)
     # start_position = input("Enter the cells: >")
     while True:
         command = input('Input command: >').lower()
@@ -231,7 +313,7 @@ if __name__ == '__main__':
                 print('Bad parameters!')
                 continue
             playerX = command.split()[1]
-            enabled_users_list = ['easy', 'user', ]
+            enabled_users_list = ['easy', 'medium', 'user', ]
             if playerX not in enabled_users_list:
                 print('Bad parameters!')
                 continue
@@ -241,4 +323,4 @@ if __name__ == '__main__':
                 print('Bad parameters!')
                 continue
 
-            game_with_opponent(playerX, playerO, dimension=5)
+            game_with_opponent(playerX, playerO, dimension=3)

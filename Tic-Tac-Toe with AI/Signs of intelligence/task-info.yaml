@@ -331,6 +331,12 @@ files:
     if __name__ == '__main__':
         TicTacToeTest('tictactoe.tictactoe').run_tests()
   learner_created: false
+- name: tictactoe/__init__.py
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/82/stages/455/implement#comment
 status: Unchecked
+feedback:
+  message: Solution can't be loaded. Reset task to solve it again
+  time: Thu, 24 Dec 2020 19:20:50 UTC
 record: -1
