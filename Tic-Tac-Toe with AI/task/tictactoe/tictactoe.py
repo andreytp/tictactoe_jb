@@ -130,7 +130,7 @@ class TicTacToe:
 
         moves_space = {k: v for k, v in self.game_table.items() if v == SPACE}
 
-        if len(moves_space) >= (self.dimension * self.dimension):
+        if len(moves_space) >= (self.dimension * self.dimension - 3):
             random.seed(self.dimension * self.dimension)
             return 0, self.random_choice()
 
@@ -240,9 +240,9 @@ class TicTacToe:
         if len(next_moves[opponent_role]) > 0:
             return next_moves[opponent_role][0]
 
-        # center_pos = (2, 2)
-        # if self.game_table[center_pos] == ' ':
-        #     return center_pos
+        center_pos = (2, 2)
+        if self.game_table[center_pos] == ' ':
+            return center_pos
 
         return self.random_choice()
 

@@ -314,7 +314,7 @@ class TicTacToeTest(StageTest):
             return CheckResult.correct()
         else:
             return CheckResult.wrong(f"The difficulty of your hard AI is too high." +
-                                     f"Make it easier. {self.draw}")
+                                     f"Make it easier.")
 
     def final_check_hard_vs_medium(self, reply, attach):
         if self.win > 12:
