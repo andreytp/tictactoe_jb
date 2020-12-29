@@ -1,5 +1,13 @@
 # write your code here
 import random
+import sys
+
+SCORE = 'score'
+FUNCTION = 'function'
+COMPARE = 'compare'
+INIT_BEST_CHOICE = 'init_best_choice'
+DRAW = 'draw'
+SPACE = ' '
 
 
 class TicTacToeException(Exception):
@@ -67,7 +75,7 @@ class TicTacToe:
 
     def generate_game_table(self):
         for val in self.start_pos_indexes.values():
-            self.game_table[val] = ' '
+            self.game_table[val] = SPACE
 
     def fill_start_pos(self, start_position):
         for index, symbol in enumerate(start_position.upper()):
@@ -85,10 +93,10 @@ class TicTacToe:
     def set_state(self):
         self.state = 'Game not finished'
         winner = self.check_win()
-        if winner != ' ':
+        if winner != SPACE:
             self.state = winner + ' wins'
             raise WinFound(winner)
-        count_ = len({k: v for k, v in self.game_table.items() if v == ' '})
+        count_ = len({k: v for k, v in self.game_table.items() if v == SPACE})
         if count_ == 0:
             self.state = 'Draw'
 
@@ -100,6 +108,68 @@ class TicTacToe:
             return 'X'
 
         return 'O'
+
+    @staticmethod
+    def result_measure(role):
+        res_dict = {'X': {FUNCTION:         min,
+                          SCORE:            -10,
+                          COMPARE:          lambda x, y: x < y,
+                          INIT_BEST_CHOICE: sys.maxsize,
+                          DRAW:             0,
+                          },
+                    'O': {FUNCTION:         max,
+                          SCORE:            10,
+                          COMPARE:          lambda x, y: x > y,
+                          INIT_BEST_CHOICE: -sys.maxsize,
+                          DRAW:             0,
+                          },
+                    }
+        return res_dict[role]
+
+    def minimax(self, role):
+
+        moves_space = {k: v for k, v in self.game_table.items() if v == SPACE}
+
+        if len(moves_space) >= (self.dimension * self.dimension):
+            random.seed(self.dimension * self.dimension)
+            return 0, self.random_choice()
+
+        result_function = self.result_measure(role)
+        best_choice = result_function[INIT_BEST_CHOICE]
+        best_choice_move = None
+        choice_dict = {}
+
+        for move in moves_space:
+            self.game_table[move] = role
+
+            if self.check_draw():
+                self.game_table[move] = SPACE
+                choice_dict[move] = result_function[DRAW]
+                continue
+
+            win_role = self.check_win()
+            if win_role == role:
+                self.game_table[move] = SPACE
+                choice_dict[move] = result_function[SCORE]
+                continue
+
+            if win_role == 'XO'.replace(role, ''):
+                self.game_table[move] = SPACE
+                choice_dict[move] = self.result_measure('XO'.replace(role, ''))[SCORE] * 10
+                continue
+
+            if win_role == SPACE:
+                choice, choice_move = self.minimax('XO'.replace(role, ''))
+                choice_dict[choice_move] = choice
+
+            self.game_table[move] = SPACE
+
+        for item, val in choice_dict.items():
+            if result_function[COMPARE](val, best_choice):
+                best_choice_move = item
+                best_choice = val
+
+        return best_choice, best_choice_move
 
     def find_next_move(self, role):
         next_moves = {'X': [], 'O': [], }
@@ -113,7 +183,7 @@ class TicTacToe:
 
                 if self.game_table[(i, i)] == player:
                     wind += 1
-                elif self.game_table[(i, i)] == ' ':
+                elif self.game_table[(i, i)] == SPACE:
                     wind_pos = (i, i)
                 else:
                     wind = 0
@@ -124,7 +194,7 @@ class TicTacToe:
 
                 if self.game_table[(i, self.dimension - i + 1)] == player:
                     winnd += 1
-                elif self.game_table[(i, self.dimension - i + 1)] == ' ':
+                elif self.game_table[(i, self.dimension - i + 1)] == SPACE:
                     winnd_pos = (i, self.dimension - i + 1)
                 else:
                     winnd = 0
@@ -142,7 +212,7 @@ class TicTacToe:
 
                     if self.game_table[(i, j)] == player:
                         winh += 1
-                    elif self.game_table[(i, j)] == ' ':
+                    elif self.game_table[(i, j)] == SPACE:
                         winh_pos = (i, j)
                     else:
                         winh = 0
@@ -153,7 +223,7 @@ class TicTacToe:
 
                     if self.game_table[(j, i)] == player:
                         winv += 1
-                    elif self.game_table[(j, i)] == ' ':
+                    elif self.game_table[(j, i)] == SPACE:
                         winv_pos = (j, i)
                     else:
                         winv = 0
@@ -170,11 +240,14 @@ class TicTacToe:
         if len(next_moves[opponent_role]) > 0:
             return next_moves[opponent_role][0]
 
-        center_pos = (2, 2)
-        if self.game_table[center_pos] == ' ':
-            return center_pos
+        # center_pos = (2, 2)
+        # if self.game_table[center_pos] == ' ':
+        #     return center_pos
 
         return self.random_choice()
+
+    def check_draw(self):
+        return len({k: v for k, v in self.game_table.items() if v == SPACE}) < 1
 
     def check_win(self):
         for player in 'XO':
@@ -218,7 +291,7 @@ class TicTacToe:
 
                     if winv == self.dimension:
                         return player
-        return ' '
+        return SPACE
 
     def computer_move(self, level=None, role=None):
         if level is None:
@@ -226,11 +299,17 @@ class TicTacToe:
         if role is None:
             role = 'O'
 
+        move_pos = None
+
         if self.state == 'Draw':
             return
         if level == 'easy':
             move_pos = self.random_choice()
         elif level == 'medium':
+            move_pos = self.find_next_move(role)
+        elif level == 'hard':
+            # move_pos = self.minimax(role)[1]
+            # move_pos = self.random_choice()
             move_pos = self.find_next_move(role)
         self.game_table[move_pos] = role
         print(f'Making move level "{level}"')
@@ -313,7 +392,7 @@ if __name__ == '__main__':
                 print('Bad parameters!')
                 continue
             playerX = command.split()[1]
-            enabled_users_list = ['easy', 'medium', 'user', ]
+            enabled_users_list = ['easy', 'medium', 'hard', 'user', ]
             if playerX not in enabled_users_list:
                 print('Bad parameters!')
                 continue
